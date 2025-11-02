@@ -1,0 +1,51 @@
+{
+  "name": "binance-futures-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for Binance USDⓈ-M Futures trading",
+  "type": "module",
+  "bin": {
+    "binance-futures-mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "test": "node build/index.js --list-tools",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "binance-futures-mcp",
+    "binance",
+    "futures",
+    "trading",
+    "cryptocurrency",
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "claude-desktop",
+    "binance-api",
+    "futures-trading",
+    "crypto-trading",
+    "usdt-futures",
+    "derivatives",
+    "trading-bot",
+    "api-integration"
+  ],
+  "author": "Binance Futures MCP",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "0.6.0",
+    "dotenv": "^16.4.5",
+    "axios": "^1.6.7",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/yargs": "^17.0.32",
+    "typescript": "^5.3.3"
+  }
+}
