@@ -221,8 +221,8 @@ class BinanceFuturesClient {
           url: `${endpoint}?${queryString}`
         });
         return response.data;
-      } else {
-        // POST requests: Binance expects form data
+      } else if (method === 'POST' || method === 'PUT') {
+        // POST/PUT requests: Binance expects form data
         // Build form data with same sorting as signRequest to ensure consistency
         const sortedKeys = Object.keys(queryParams).sort();
         const formDataPairs = sortedKeys.map(key => {
@@ -233,12 +233,17 @@ class BinanceFuturesClient {
         });
         const formData = formDataPairs.join('&');
         
-        const response = await this.axiosInstance.post(endpoint, formData, {
+        const response = await this.axiosInstance.request({
+          method: method as any,
+          url: endpoint,
+          data: formData,
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           }
         });
         return response.data;
+      } else {
+        throw new Error(`Unsupported HTTP method: ${method}`);
       }
     } catch (error: any) {
       if (error.response?.data) {
@@ -252,7 +257,7 @@ class BinanceFuturesClient {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const tools: Tool[] = [
         {
-          name: "binance-futures-new-order",
+          name: "new-order",
           description: "Create a new order on Binance USDⓈ-M Futures. Supports all order types: LIMIT, MARKET, STOP, STOP_MARKET, TAKE_PROFIT, TAKE_PROFIT_MARKET, TRAILING_STOP_MARKET. Essential for executing trades on futures markets.",
           inputSchema: {
             type: "object",
@@ -335,7 +340,7 @@ class BinanceFuturesClient {
           }
         },
         {
-          name: "binance-futures-query-order",
+          name: "query-order",
           description: "Query the status of a specific order on Binance USDⓈ-M Futures. Use this to check if an order was filled, pending, or cancelled.",
           inputSchema: {
             type: "object",
@@ -357,7 +362,7 @@ class BinanceFuturesClient {
           }
         },
         {
-          name: "binance-futures-cancel-order",
+          name: "cancel-order",
           description: "Cancel an existing order on Binance USDⓈ-M Futures. Use this to cancel pending orders that haven't been executed yet.",
           inputSchema: {
             type: "object",
@@ -379,7 +384,7 @@ class BinanceFuturesClient {
           }
         },
         {
-          name: "binance-futures-get-account",
+          name: "get-account",
           description: "Get current account information including balances, margin, and positions for Binance USDⓈ-M Futures. Essential for risk management and portfolio tracking.",
           inputSchema: {
             type: "object",
@@ -388,7 +393,7 @@ class BinanceFuturesClient {
           required: []
         },
         {
-          name: "binance-futures-get-position",
+          name: "get-position",
           description: "Get current position information for Binance USDⓈ-M Futures. Returns details about open positions including entry price, size, PnL, and margin used.",
           inputSchema: {
             type: "object",
@@ -402,7 +407,7 @@ class BinanceFuturesClient {
           required: []
         },
         {
-          name: "binance-futures-get-open-orders",
+          name: "get-open-orders",
           description: "Get all current open orders for Binance USDⓈ-M Futures. Useful for monitoring pending orders and managing active trades.",
           inputSchema: {
             type: "object",
@@ -416,7 +421,7 @@ class BinanceFuturesClient {
           required: []
         },
         {
-          name: "binance-futures-cancel-all-orders",
+          name: "cancel-all-orders",
           description: "Cancel all open orders for a specific symbol on Binance USDⓈ-M Futures. Use with caution as this will cancel all pending orders.",
           inputSchema: {
             type: "object",
@@ -424,6 +429,175 @@ class BinanceFuturesClient {
               symbol: {
                 type: "string",
                 description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              }
+            },
+            required: ["symbol"]
+          }
+        },
+        {
+          name: "modify-order",
+          description: "Modify an existing order on Binance USDⓈ-M Futures. Useful for updating price or quantity of pending orders without canceling and recreating them.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              },
+              side: {
+                type: "string",
+                enum: ["BUY", "SELL"],
+                description: "Order side: BUY or SELL (required)"
+              },
+              orderId: {
+                type: "number",
+                description: "Order ID from Binance"
+              },
+              origClientOrderId: {
+                type: "string",
+                description: "Original client order ID"
+              },
+              quantity: {
+                type: "number",
+                description: "New quantity (optional)"
+              },
+              price: {
+                type: "number",
+                description: "New price (optional)"
+              }
+            },
+            required: ["symbol", "side"]
+          }
+        },
+        {
+          name: "change-leverage",
+          description: "Change the initial leverage of a symbol for Binance USDⓈ-M Futures. Critical for risk management and position sizing.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              },
+              leverage: {
+                type: "number",
+                description: "Target leverage level (1-125, depends on symbol)"
+              }
+            },
+            required: ["symbol", "leverage"]
+          }
+        },
+        {
+          name: "change-position-mode",
+          description: "Change position mode between One-way Mode and Hedge Mode for Binance USDⓈ-M Futures. Hedge Mode allows holding both LONG and SHORT positions simultaneously.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              dualSidePosition: {
+                type: "string",
+                enum: ["true", "false"],
+                description: "true for Hedge Mode, false for One-way Mode"
+              }
+            },
+            required: ["dualSidePosition"]
+          }
+        },
+        {
+          name: "change-margin-type",
+          description: "Change margin type between Cross and Isolated for a symbol on Binance USDⓈ-M Futures. Isolated margin limits risk to the specific position.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              },
+              marginType: {
+                type: "string",
+                enum: ["ISOLATED", "CROSSED"],
+                description: "ISOLATED for isolated margin, CROSSED for cross margin"
+              }
+            },
+            required: ["symbol", "marginType"]
+          }
+        },
+        {
+          name: "modify-position-margin",
+          description: "Modify isolated position margin for Binance USDⓈ-M Futures. Add or reduce margin to adjust position risk and prevent liquidation.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              },
+              amount: {
+                type: "number",
+                description: "Amount to add or reduce (positive to add, negative to reduce)"
+              },
+              type: {
+                type: "number",
+                description: "Type: 1=Add margin, 2=Reduce margin"
+              }
+            },
+            required: ["symbol", "amount", "type"]
+          }
+        },
+        {
+          name: "get-all-orders",
+          description: "Get all orders (open, filled, cancelled) for a symbol on Binance USDⓈ-M Futures. Useful for order history and auditing.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              },
+              orderId: {
+                type: "number",
+                description: "If provided, returns orders >= orderId"
+              },
+              startTime: {
+                type: "number",
+                description: "Start time in milliseconds (optional)"
+              },
+              endTime: {
+                type: "number",
+                description: "End time in milliseconds (optional)"
+              },
+              limit: {
+                type: "number",
+                description: "Number of orders to return (default: 500, max: 1000)"
+              }
+            },
+            required: ["symbol"]
+          }
+        },
+        {
+          name: "get-trade-history",
+          description: "Get account trade list (executed trades) for Binance USDⓈ-M Futures. Returns detailed information about filled orders including price, quantity, and fees.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol: {
+                type: "string",
+                description: "Trading pair symbol (e.g., BTCUSDT, ETHUSDT)"
+              },
+              startTime: {
+                type: "number",
+                description: "Start time in milliseconds (optional)"
+              },
+              endTime: {
+                type: "number",
+                description: "End time in milliseconds (optional)"
+              },
+              fromId: {
+                type: "number",
+                description: "Trade ID to fetch from (optional)"
+              },
+              limit: {
+                type: "number",
+                description: "Number of trades to return (default: 500, max: 1000)"
               }
             },
             required: ["symbol"]
@@ -439,7 +613,7 @@ class BinanceFuturesClient {
         let response: any;
 
         switch (request.params.name) {
-          case "binance-futures-new-order":
+          case "new-order":
             response = await this.newOrder(args);
             return {
               content: [{
@@ -448,7 +622,7 @@ class BinanceFuturesClient {
               }]
             };
 
-          case "binance-futures-query-order":
+          case "query-order":
             response = await this.queryOrder(args);
             return {
               content: [{
@@ -457,7 +631,7 @@ class BinanceFuturesClient {
               }]
             };
 
-          case "binance-futures-cancel-order":
+          case "cancel-order":
             response = await this.cancelOrder(args);
             return {
               content: [{
@@ -466,7 +640,7 @@ class BinanceFuturesClient {
               }]
             };
 
-          case "binance-futures-get-account":
+          case "get-account":
             response = await this.getAccount();
             return {
               content: [{
@@ -475,7 +649,7 @@ class BinanceFuturesClient {
               }]
             };
 
-          case "binance-futures-get-position":
+          case "get-position":
             response = await this.getPosition(args.symbol);
             return {
               content: [{
@@ -484,7 +658,7 @@ class BinanceFuturesClient {
               }]
             };
 
-          case "binance-futures-get-open-orders":
+          case "get-open-orders":
             response = await this.getOpenOrders(args.symbol);
             return {
               content: [{
@@ -493,12 +667,75 @@ class BinanceFuturesClient {
               }]
             };
 
-          case "binance-futures-cancel-all-orders":
+          case "cancel-all-orders":
             response = await this.cancelAllOrders(args.symbol);
             return {
               content: [{
                 type: "text",
                 text: formatOrdersResponse(response)
+              }]
+            };
+
+          case "modify-order":
+            response = await this.modifyOrder(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatOrderResponse(response)
+              }]
+            };
+
+          case "change-leverage":
+            response = await this.changeLeverage(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatLeverageResponse(response)
+              }]
+            };
+
+          case "change-position-mode":
+            response = await this.changePositionMode(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatPositionModeResponse(response)
+              }]
+            };
+
+          case "change-margin-type":
+            response = await this.changeMarginType(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatMarginTypeResponse(response)
+              }]
+            };
+
+          case "modify-position-margin":
+            response = await this.modifyPositionMargin(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatPositionMarginResponse(response)
+              }]
+            };
+
+          case "get-all-orders":
+            response = await this.getAllOrders(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatOrdersResponse(response)
+              }]
+            };
+
+          case "get-trade-history":
+            response = await this.getTradeHistory(args);
+            return {
+              content: [{
+                type: "text",
+                text: formatTradeHistoryResponse(response)
               }]
             };
 
@@ -598,6 +835,90 @@ class BinanceFuturesClient {
 
   async cancelAllOrders(symbol: string): Promise<any> {
     return await this.makeSignedRequest('DELETE', '/fapi/v1/allOpenOrders', { symbol });
+  }
+
+  async modifyOrder(params: any): Promise<BinanceOrderResponse> {
+    const modifyParams: Record<string, any> = {
+      symbol: params.symbol,
+      side: params.side, // Required by Binance API
+    };
+
+    // Either orderId or origClientOrderId must be provided
+    if (params.orderId !== undefined) {
+      modifyParams.orderId = params.orderId;
+    } else if (params.origClientOrderId) {
+      modifyParams.origClientOrderId = params.origClientOrderId;
+    } else {
+      throw new Error("Either orderId or origClientOrderId must be provided");
+    }
+
+    if (params.quantity !== undefined) modifyParams.quantity = params.quantity;
+    if (params.price !== undefined) modifyParams.price = params.price;
+
+    // PUT request for modify order
+    return await this.makeSignedRequest('PUT', '/fapi/v1/order', modifyParams);
+  }
+
+  async changeLeverage(params: any): Promise<any> {
+    const leverageParams: Record<string, any> = {
+      symbol: params.symbol,
+      leverage: params.leverage,
+    };
+
+    return await this.makeSignedRequest('POST', '/fapi/v1/leverage', leverageParams);
+  }
+
+  async changePositionMode(params: any): Promise<any> {
+    const modeParams: Record<string, any> = {
+      dualSidePosition: params.dualSidePosition,
+    };
+
+    return await this.makeSignedRequest('POST', '/fapi/v1/positionSide/dual', modeParams);
+  }
+
+  async changeMarginType(params: any): Promise<any> {
+    const marginParams: Record<string, any> = {
+      symbol: params.symbol,
+      marginType: params.marginType,
+    };
+
+    return await this.makeSignedRequest('POST', '/fapi/v1/marginType', marginParams);
+  }
+
+  async modifyPositionMargin(params: any): Promise<any> {
+    const marginParams: Record<string, any> = {
+      symbol: params.symbol,
+      amount: params.amount,
+      type: params.type,
+    };
+
+    return await this.makeSignedRequest('POST', '/fapi/v1/positionMargin', marginParams);
+  }
+
+  async getAllOrders(params: any): Promise<BinanceOrderResponse[]> {
+    const queryParams: Record<string, any> = {
+      symbol: params.symbol,
+    };
+
+    if (params.orderId !== undefined) queryParams.orderId = params.orderId;
+    if (params.startTime !== undefined) queryParams.startTime = params.startTime;
+    if (params.endTime !== undefined) queryParams.endTime = params.endTime;
+    if (params.limit !== undefined) queryParams.limit = params.limit;
+
+    return await this.makeSignedRequest('GET', '/fapi/v1/allOrders', queryParams);
+  }
+
+  async getTradeHistory(params: any): Promise<any[]> {
+    const queryParams: Record<string, any> = {
+      symbol: params.symbol,
+    };
+
+    if (params.startTime !== undefined) queryParams.startTime = params.startTime;
+    if (params.endTime !== undefined) queryParams.endTime = params.endTime;
+    if (params.fromId !== undefined) queryParams.fromId = params.fromId;
+    if (params.limit !== undefined) queryParams.limit = params.limit;
+
+    return await this.makeSignedRequest('GET', '/fapi/v1/userTrades', queryParams);
   }
 }
 
@@ -717,35 +1038,102 @@ function formatOrdersResponse(orders: BinanceOrderResponse | BinanceOrderRespons
   return output.join('\n');
 }
 
+function formatLeverageResponse(response: any): string {
+  return `Leverage changed successfully:\nSymbol: ${response.symbol}\nLeverage: ${response.leverage}x\nMax Notional Value: ${response.maxNotionalValue}`;
+}
+
+function formatPositionModeResponse(response: any): string {
+  return `Position mode changed successfully.\nDual Side Position: ${response.dualSidePosition}`;
+}
+
+function formatMarginTypeResponse(response: any): string {
+  return `Margin type changed successfully.\nSymbol: ${response.symbol}\nMargin Type: ${response.marginType}`;
+}
+
+function formatPositionMarginResponse(response: any): string {
+  return `Position margin modified successfully.\nAmount: ${response.amount}\nCode: ${response.code}\nMessage: ${response.msg || 'Success'}`;
+}
+
+function formatTradeHistoryResponse(trades: any[]): string {
+  if (trades.length === 0) {
+    return "No trades found";
+  }
+
+  const output: string[] = [];
+  output.push(`Trade History (${trades.length} trades):`);
+
+  trades.forEach((trade, index) => {
+    output.push(`\n[${index + 1}] Trade ID: ${trade.id}`);
+    output.push(`  Symbol: ${trade.symbol}`);
+    output.push(`  Side: ${trade.side}`);
+    output.push(`  Price: ${trade.price}`);
+    output.push(`  Quantity: ${trade.qty}`);
+    output.push(`  Quote Quantity: ${trade.quoteQty}`);
+    output.push(`  Realized PnL: ${trade.realizedPnl || 'N/A'}`);
+    output.push(`  Fee: ${trade.commission}`);
+    output.push(`  Time: ${new Date(trade.time).toISOString()}`);
+  });
+
+  return output.join('\n');
+}
+
 function listTools(): void {
   const tools = [
     {
-      name: "binance-futures-new-order",
+      name: "new-order",
       description: "Create a new order on Binance USDⓈ-M Futures"
     },
     {
-      name: "binance-futures-query-order",
+      name: "query-order",
       description: "Query the status of a specific order"
     },
     {
-      name: "binance-futures-cancel-order",
+      name: "cancel-order",
       description: "Cancel an existing order"
     },
     {
-      name: "binance-futures-get-account",
+      name: "modify-order",
+      description: "Modify an existing order"
+    },
+    {
+      name: "get-account",
       description: "Get current account information"
     },
     {
-      name: "binance-futures-get-position",
+      name: "get-position",
       description: "Get current position information"
     },
     {
-      name: "binance-futures-get-open-orders",
+      name: "get-open-orders",
       description: "Get all current open orders"
     },
     {
-      name: "binance-futures-cancel-all-orders",
+      name: "get-all-orders",
+      description: "Get all orders (history)"
+    },
+    {
+      name: "get-trade-history",
+      description: "Get trade history"
+    },
+    {
+      name: "cancel-all-orders",
       description: "Cancel all open orders for a symbol"
+    },
+    {
+      name: "change-leverage",
+      description: "Change leverage for a symbol"
+    },
+    {
+      name: "change-position-mode",
+      description: "Change position mode (One-way/Hedge)"
+    },
+    {
+      name: "change-margin-type",
+      description: "Change margin type (Isolated/Cross)"
+    },
+    {
+      name: "modify-position-margin",
+      description: "Modify isolated position margin"
     }
   ];
 
