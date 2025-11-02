@@ -174,7 +174,7 @@ class BinanceFuturesClient {
       .digest('hex');
   }
 
-  private async makeSignedRequest(method: string, endpoint: string, params: Record<string, any> = {}): Promise<any> {
+  private async makeSignedRequest(method: string, endpoint: string, params: Record<string, any> = {}, useStrictSigning: boolean = false): Promise<any> {
     const timestamp = Date.now();
     const queryParams: Record<string, any> = {};
     
@@ -192,12 +192,30 @@ class BinanceFuturesClient {
 
     try {
       if (method === 'GET' || method === 'DELETE') {
-        const queryString = new URLSearchParams(
-          Object.entries(queryParams).reduce((acc, [key, value]) => {
-            acc[key] = String(value);
-            return acc;
-          }, {} as Record<string, string>)
-        ).toString();
+        let queryString: string;
+        
+        if (useStrictSigning) {
+          // Build query string with same sorting as signRequest to ensure consistency
+          // Used for query-order and cancel-order which have issues with URLSearchParams
+          const sortedKeys = Object.keys(queryParams).sort();
+          const queryPairs = sortedKeys.map(key => {
+            const value = queryParams[key];
+            const stringValue = value !== null && value !== undefined ? String(value) : '';
+            // URL encode key and value for the actual request
+            return `${encodeURIComponent(key)}=${encodeURIComponent(stringValue)}`;
+          });
+          queryString = queryPairs.join('&');
+        } else {
+          // Use URLSearchParams for other endpoints (get-account, get-open-orders, etc.)
+          // These were working fine before
+          queryString = new URLSearchParams(
+            Object.entries(queryParams).reduce((acc, [key, value]) => {
+              acc[key] = String(value);
+              return acc;
+            }, {} as Record<string, string>)
+          ).toString();
+        }
+        
         const response = await this.axiosInstance.request({
           method: method as any,
           url: `${endpoint}?${queryString}`
@@ -546,7 +564,8 @@ class BinanceFuturesClient {
     if (params.orderId !== undefined) queryParams.orderId = params.orderId;
     if (params.origClientOrderId) queryParams.origClientOrderId = params.origClientOrderId;
 
-    return await this.makeSignedRequest('GET', '/fapi/v1/order', queryParams);
+    // Use strict signing for query-order to fix signature issues
+    return await this.makeSignedRequest('GET', '/fapi/v1/order', queryParams, true);
   }
 
   async cancelOrder(params: any): Promise<BinanceOrderResponse> {
@@ -557,7 +576,8 @@ class BinanceFuturesClient {
     if (params.orderId !== undefined) cancelParams.orderId = params.orderId;
     if (params.origClientOrderId) cancelParams.origClientOrderId = params.origClientOrderId;
 
-    return await this.makeSignedRequest('DELETE', '/fapi/v1/order', cancelParams);
+    // Use strict signing for cancel-order to fix signature issues
+    return await this.makeSignedRequest('DELETE', '/fapi/v1/order', cancelParams, true);
   }
 
   async getAccount(): Promise<BinanceAccountResponse> {
