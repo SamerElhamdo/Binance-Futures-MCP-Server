@@ -156,7 +156,16 @@ class BinanceFuturesClient {
   private signRequest(params: Record<string, any>): string {
     const queryString = Object.keys(params)
       .sort()
-      .map(key => `${key}=${params[key]}`)
+      .map(key => {
+        const value = params[key];
+        // Convert all values to strings for consistent signature generation
+        // Handle null/undefined explicitly
+        if (value === null || value === undefined) {
+          return `${key}=`;
+        }
+        // Convert to string - this handles numbers, booleans, etc.
+        return `${key}=${String(value)}`;
+      })
       .join('&');
     
     return crypto
@@ -196,12 +205,15 @@ class BinanceFuturesClient {
         return response.data;
       } else {
         // POST requests: Binance expects form data
-        const formData = new URLSearchParams(
-          Object.entries(queryParams).reduce((acc, [key, value]) => {
-            acc[key] = String(value);
-            return acc;
-          }, {} as Record<string, string>)
-        ).toString();
+        // Build form data with same sorting as signRequest to ensure consistency
+        const sortedKeys = Object.keys(queryParams).sort();
+        const formDataPairs = sortedKeys.map(key => {
+          const value = queryParams[key];
+          const stringValue = value !== null && value !== undefined ? String(value) : '';
+          // URL encode key and value for form data
+          return `${encodeURIComponent(key)}=${encodeURIComponent(stringValue)}`;
+        });
+        const formData = formDataPairs.join('&');
         
         const response = await this.axiosInstance.post(endpoint, formData, {
           headers: {
@@ -503,8 +515,14 @@ class BinanceFuturesClient {
       type: params.type,
     };
 
+    // timeInForce is mandatory for LIMIT orders
+    if (params.type === 'LIMIT') {
+      orderParams.timeInForce = params.timeInForce || 'GTC';
+    } else if (params.timeInForce) {
+      orderParams.timeInForce = params.timeInForce;
+    }
+
     if (params.positionSide) orderParams.positionSide = params.positionSide;
-    if (params.timeInForce) orderParams.timeInForce = params.timeInForce;
     if (params.quantity !== undefined) orderParams.quantity = params.quantity;
     if (params.price !== undefined) orderParams.price = params.price;
     if (params.reduceOnly) orderParams.reduceOnly = params.reduceOnly;
