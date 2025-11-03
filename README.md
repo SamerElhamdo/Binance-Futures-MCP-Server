@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green?style=flat-square&logo=node.js)](https://nodejs.org/)
 
-![Binance Futures Trading](https://via.placeholder.com/800x300/0B1426/FFFFFF?text=Binance+Futures+MCP+Server)
+![Binance Futures Trading](./images/header-banner.png)
 *Connect AI assistants like Claude to Binance Futures trading seamlessly*
 
 [Features](#-features) • [Installation](#-installation) • [Tools](#-available-tools) • [Configuration](#-configuration) • [Documentation](#-documentation)
@@ -51,6 +51,8 @@ The **Binance Futures MCP Server** is a comprehensive Model Context Protocol (MC
 - 🎨 **Easy to Use** - Simple configuration and intuitive tool names
 
 ## ✨ Features
+
+![Features Overview](./images/features-diagram.png)
 
 ### Core Trading Operations
 - 📝 **Order Management**: Create, modify, query, and cancel orders
@@ -454,6 +456,8 @@ BINANCE_SECRET_KEY=your-secret-key-here
 ```
 
 ## 📚 API Documentation
+
+![Architecture Diagram](./images/architecture-diagram.png)
 
 This MCP server uses the official [Binance USDⓈ-M Futures API](https://developers.binance.com/docs/derivatives/usds-margined-futures/trade/rest-api).
 
