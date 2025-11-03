@@ -6,6 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/binance-futures-mcp?style=flat-square)](https://www.npmjs.com/package/binance-futures-mcp)
 [![npm downloads](https://img.shields.io/npm/dt/binance-futures-mcp?style=flat-square)](https://www.npmjs.com/package/binance-futures-mcp)
+[![GitHub Repo stars](https://img.shields.io/github/stars/SamerElhamdo/Binance-Futures-MCP-Server?style=flat-square)](https://github.com/SamerElhamdo/Binance-Futures-MCP-Server)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green?style=flat-square&logo=node.js)](https://nodejs.org/)

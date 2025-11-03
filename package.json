@@ -1,13 +1,16 @@
 {
   "name": "binance-futures-mcp",
   "version": "0.2.0",
-  "description": "MCP server for Binance USDⓈ-M Futures trading",
+  "description": "Powerful Model Context Protocol server for Binance USDⓈ-M Futures trading. 14 comprehensive tools for order management, position tracking, account monitoring, and risk management. Enables AI assistants like Claude to interact with Binance Futures API seamlessly.",
   "type": "module",
+  "main": "build/index.js",
   "bin": {
     "binance-futures-mcp": "./build/index.js"
   },
   "files": [
-    "build"
+    "build",
+    "README.md",
+    "LICENCE"
   ],
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
@@ -33,10 +36,32 @@
     "usdt-futures",
     "derivatives",
     "trading-bot",
-    "api-integration"
+    "api-integration",
+    "cursor",
+    "cline",
+    "ai-trading",
+    "algorithmic-trading",
+    "trading-automation",
+    "crypto-automation",
+    "leverage",
+    "margin-trading"
   ],
-  "author": "Binance Futures MCP",
+  "author": {
+    "name": "Samer Elhamdo",
+    "url": "https://github.com/SamerElhamdo"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SamerElhamdo/Binance-Futures-MCP-Server.git"
+  },
+  "homepage": "https://github.com/SamerElhamdo/Binance-Futures-MCP-Server#readme",
+  "bugs": {
+    "url": "https://github.com/SamerElhamdo/Binance-Futures-MCP-Server/issues"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "0.6.0",
     "dotenv": "^16.4.5",
