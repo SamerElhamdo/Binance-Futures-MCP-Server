@@ -1,6 +1,6 @@
 {
   "name": "binance-futures-mcp",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Powerful Model Context Protocol server for Binance USDⓈ-M Futures trading. 14 comprehensive tools for order management, position tracking, account monitoring, and risk management. Enables AI assistants like Claude to interact with Binance Futures API seamlessly.",
   "type": "module",
   "main": "build/index.js",
